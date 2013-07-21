@@ -2616,7 +2616,7 @@ class PlexLibrary(Screen):
 			
 		streamURL = ""
 		transcode = []
-		universalTranscoder = False
+		universalTranscoder = True
 		if universalTranscoder == False:
 			ts = int(time())
 			printl("Setting up HTTP Stream", self, "I")
@@ -2645,33 +2645,34 @@ class PlexLibrary(Screen):
 			streamFile = 'start.m3u8'
 			#transcode.append("path=%s%s" % (quote_plus('http://localhost:32400/'), quote_plus(filename)))
 			#transcode.append("path=http%3A%2F%2F127.0.0.1%3A32400%2Flibrary%2Fmetadata%2F10635")
-			transcode.append("path=%s%s" % (quote_plus('http://127.0.0.1:32400'), quote_plus(self.urlPath)))
+			transcode.append("path=%s%s" % (quote_plus('http://127.0.0.1:32400/library/metadata/'), id))
 			transcode.append("session=%s" % self.g_sessionID)
 			transcode.append("protocol=hls")
 			transcode.append("offset=0")
-			transcode.append("3g=0")
 			transcode.append("directPlay=0")
-			transcode.append("directStream=0")
-			transcode.append("videoQuality=60")
-			transcode.append("videoResolution=1920x1080")
-			transcode.append("maxVideoBitrate=8000")
+			transcode.append("mediaIndex=0")
+			transcode.append("partIndex=0")
+			transcode.append("directStream=1")
+			transcode.append("videoQuality=90")
+			transcode.append("videoResolution=1280x720")
+			transcode.append("maxVideoBitrate=4000")
 			transcode.append("subtitleSize=100")
 			transcode.append("audioBoost=100")
-			transcode.append("waitForSegments=1")
-			transcode.append("X-Plex-Device=iPhone")
-			transcode.append("X-Plex-Token=ztTLp3RYymrsCH7XP6Zp")
-			transcode.append("X-Plex-Client-Platform=iOS")
-			transcode.append("X-Plex-Device-Name=DDiPhone")
+			transcode.append("waitForSegments=0")
+			transcode.append("X-Plex-Device=" + quote_plus('Plex Home Theater'))
+			
+			transcode.append("X-Plex-Client-Platform=Engima2")
+			transcode.append("X-Plex-Device-Name=Dreambox-DreamPlex")
 			transcode.append("X-Plex-Model=5%2C2")
-			transcode.append("X-Plex-Platform=iOS")
+			transcode.append("X-Plex-Platform=Enigma2-DreamPlex")
 			transcode.append("X-Plex-Client-Identifier=%s" % self.g_sessionID)
-			transcode.append("X-Plex-Product=Plex%2FiOS")
-			transcode.append("X-Plex-Platform-Version=6.1.2")
-			transcode.append("X-Plex-Version=3.1.3")
+			transcode.append("X-Plex-Product=DreamPlex")
+			transcode.append("X-Plex-Platform-Version=oe2.0")
+			transcode.append("X-Plex-Version=0.9.2")
 			timestamp = "@%d" % ts
 			streamParams = "%s/%s?%s" % (streamPath, streamFile, "&".join(transcode))
-			pac = quote_plus(b64encode(hmac.new(b64decode(privateKey), '/' + streamParams + timestamp, digestmod=sha256).digest()).decode()).replace('+', '%20')
-			streamURL += "http://%s/%s&X-Plex-Client-Capabilities=%s&X-Plex-Access-Key=%s&X-Plex-Access-Time=%d&X-Plex-Access-Code=%s" % (server, streamParams, self.g_capability, publicKey, ts, pac)
+			
+			streamURL += "http://%s/%s&X-Plex-Client-Profile-Extra=%s&X-Plex-Access-Time=%d" % (server, streamParams, self.g_capability, ts)
 			printl("Encoded HTTP Stream URL: " + str(streamURL), self, "I")
 		
 		req = Request(streamURL)
@@ -3735,7 +3736,13 @@ class PlexLibrary(Screen):
 			#dts is not running for some reason
 			audioDecoders = "audioDecoders=mp3,aac"
 
-			self.g_capability = urllib.quote_plus(protocols + ";" + videoDecoders + ";" + audioDecoders)
+			extras = "add-limitation(scope=videoCodec&scopeName=h264&isRequired=true)"
+			extras = extras + "+add-transcode-target-audio-codec(type=videoProfile&context=streaming&protocol=hls&audioCodec=mp3&isRequired=true)"
+
+			#self.g_capability = urllib.quote_plus(protocols + ";" + videoDecoders + ";" + audioDecoders)
+			self.g_capability = urllib.quote_plus(extras)
+			
+
 
 			printl("Plex Client Capability = " + self.g_capability, self, "I")
 			
