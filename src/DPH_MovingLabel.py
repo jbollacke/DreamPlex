@@ -25,7 +25,7 @@ from enigma import eTimer
 from Components.Label import Label
 
 
-class MovingLabel(Label):
+class DPH_MovingLabel(Label):
 	def __init__ (self, groupTimer=None):
 		Label.__init__(self)
 

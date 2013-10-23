@@ -29,6 +29,7 @@ from Components.ActionMap import HelpableActionMap
 from Components.Input import Input
 from Components.Sources.List import List
 from Components.Sources.StaticText import StaticText
+from Components.Label import Label
 from Components.config import config
 
 from Screens.MessageBox import MessageBox
@@ -48,11 +49,15 @@ from DP_About import DPS_About
 
 from DPH_WOL import wake_on_lan
 from DPH_Singleton import Singleton
+from DPH_MovingLabel import DPH_MovingLabel
 
 #===============================================================================
 #
 #===============================================================================	
 class DPS_MainMenu(Screen):
+
+	ORIENTATION_V = 0
+	ORIENTATION_H = 1
 
 	g_wolon = False
 	g_wakeserver = "00-11-32-12-C5-F9"
@@ -80,7 +85,9 @@ class DPS_MainMenu(Screen):
 		self.selectionOverride = None
 		printl("selectionOverride:" +str(self.selectionOverride), self, "D")
 		self.session = session
-		
+
+		self.orientation = self.ORIENTATION_H
+
 		self["title"] = StaticText()
 		self["welcomemessage"] = StaticText()
 		
@@ -107,7 +114,22 @@ class DPS_MainMenu(Screen):
 		if config.plugins.dreamplex.stopLiveTvOnStartup.value:
 			self.currentService = self.session.nav.getCurrentlyPlayingServiceReference()
 			self.session.nav.stopService()
-		
+
+		self["-2"] = DPH_MovingLabel()
+		self["-1"] = DPH_MovingLabel(self["-2"].getTimer())
+		self["0"]  = DPH_MovingLabel(self["-2"].getTimer())
+		self["+1"] = DPH_MovingLabel(self["-2"].getTimer())
+		self["+2"] = DPH_MovingLabel(self["-2"].getTimer())
+
+		self["-3"] = Label()
+		self["+3"] = Label()
+
+		self.translatePositionToName(-2, "-2")
+		self.translatePositionToName(-1, "-1")
+		self.translatePositionToName( 0, "0")
+		self.translatePositionToName(+1, "+1")
+		self.translatePositionToName(+2, "+2")
+
 		self.onLayoutFinish.append(self.setCustomTitle)
 		self.onShown.append(self.checkSelectionOverride)
 		printl("", self, "C")
@@ -386,7 +408,8 @@ class DPS_MainMenu(Screen):
 		printl("", self, "S")
 				
 		try:
-			self["menu"].pageDown()
+			self.refreshOrientationHorMenu(+1)
+			#self["menu"].pageDown()
 		except Exception, ex:
 			printl("Exception(" + str(type(ex)) + "): " + str(ex), self, "W")
 			self["menu"].selectNext()
@@ -400,7 +423,8 @@ class DPS_MainMenu(Screen):
 		printl("", self, "S")
 		
 		try:
-			self["menu"].pageUp()
+			self.refreshOrientationHorMenu(-1)
+			#self["menu"].pageUp()
 		except Exception, ex:
 			printl("Exception(" + str(type(ex)) + "): " + str(ex), self, "W")
 			self["menu"].selectPrevious()
@@ -693,3 +717,128 @@ class DPS_MainMenu(Screen):
 			DPS_SystemCheck(self.session).checkForUpdate()
 
 		printl("", self, "C")
+
+	def refreshOrientationVerMenu(self, value):
+		printl("->", self, "S")
+		self.refreshMenu(value)
+
+	_translatePositionToName = {}
+	def translatePositionToName(self, name, value=None):
+		printl("->", self, "S")
+		if value is None:
+			return self._translatePositionToName[name]
+		else:
+			self._translatePositionToName[name] = value
+
+
+	def refreshOrientationMenu(self, value):
+		printl("->", self, "S")
+		if self.orientation == self.ORIENTATION_V:
+			self.refreshOrientationVerMenu(value)
+		elif self.orientation == self.ORIENTATION_H:
+			self.refreshOrientationHorMenu(value)
+
+	def refreshOrientationHorMenu(self, value):
+		printl("->", self, "S")
+		if self["-2"].moving is True or self["+2"].moving is True:
+				return False
+
+		self.refreshMenu(value)
+		currentIndex = self["menu"].index
+		content = self["menu"].list
+		count = len(content)
+
+		print currentIndex
+		print count
+
+		howManySteps = 10
+		doStepEveryXMs = 60
+
+		if value == 0:
+			self[self.translatePositionToName(0)].setText(content[currentIndex][0])
+			for i in range(1,3): # 1, 2
+				targetIndex = currentIndex + i
+				if targetIndex < count:
+					self[self.translatePositionToName(+i)].setText(content[targetIndex][0])
+				else:
+					self[self.translatePositionToName(+i)].setText(content[targetIndex - count][0])
+
+				targetIndex = currentIndex - i
+				if targetIndex >= 0:
+					self[self.translatePositionToName(-i)].setText(content[targetIndex][0])
+				else:
+					self[self.translatePositionToName(-i)].setText(content[count + targetIndex][0])
+
+
+		elif value == 1:
+			self[self.translatePositionToName(-1)].moveTo(self[self.translatePositionToName(-2)].getPosition(), howManySteps)
+			self[self.translatePositionToName( 0)].moveTo(self[self.translatePositionToName(-1)].getPosition(), howManySteps)
+			self[self.translatePositionToName(+1)].moveTo(self[self.translatePositionToName( 0)].getPosition(), howManySteps)
+			self[self.translatePositionToName(+2)].moveTo(self[self.translatePositionToName(+1)].getPosition(), howManySteps)
+
+			# He has to jump | This works but leaves us with an ugly jump
+			pos = self["+3"].getPosition()
+			self[self.translatePositionToName(-2)].move(pos[0], pos[1])
+			#self[self.translatePositionToName(-2)].moveTo(pos, 1)
+			self[self.translatePositionToName(-2)].moveTo(self[self.translatePositionToName(+2)].getPosition(), howManySteps)
+
+			# We have to change the conten of the most right
+			i = 2
+			targetIndex = currentIndex + i
+			if targetIndex < count:
+				self[self.translatePositionToName(-2)].setText(content[targetIndex][0])
+			else:
+				self[self.translatePositionToName(-2)].setText(content[targetIndex - count][0])
+
+			rM2 = self.translatePositionToName(-2)
+			self.translatePositionToName(-2, self.translatePositionToName(-1))
+			self.translatePositionToName(-1, self.translatePositionToName( 0))
+			self.translatePositionToName( 0, self.translatePositionToName(+1))
+			self.translatePositionToName(+1, self.translatePositionToName(+2))
+			self.translatePositionToName(+2, rM2)
+
+			self["-1"].startMoving(doStepEveryXMs)
+			self["0"].startMoving(doStepEveryXMs)
+			self["+1"].startMoving(doStepEveryXMs)
+			self["+2"].startMoving(doStepEveryXMs)
+
+			# GroupTimer
+			self["-2"].startMoving(doStepEveryXMs)
+
+		elif value == -1:
+			self[self.translatePositionToName(+1)].moveTo(self[self.translatePositionToName(+2)].getPosition(), howManySteps)
+			self[self.translatePositionToName( 0)].moveTo(self[self.translatePositionToName(+1)].getPosition(), howManySteps)
+			self[self.translatePositionToName(-1)].moveTo(self[self.translatePositionToName( 0)].getPosition(), howManySteps)
+			self[self.translatePositionToName(-2)].moveTo(self[self.translatePositionToName(-1)].getPosition(), howManySteps)
+
+			# He has to jump | This works but leaves us with an ugly jump
+			pos = self["-3"].getPosition()
+			self[self.translatePositionToName(+2)].move(pos[0], pos[1])
+			#self[self.translatePositionToName(+2)].moveTo(pos, 1)
+			self[self.translatePositionToName(+2)].moveTo(self[self.translatePositionToName(-2)].getPosition(), howManySteps)
+
+			# We have to change the conten of the most left
+			i = -2
+			targetIndex = currentIndex + i
+			if targetIndex >= 0:
+				self[self.translatePositionToName(+2)].setText(content[targetIndex][0])
+			else:
+				self[self.translatePositionToName(+2)].setText(content[count + targetIndex][0])
+
+			rP2 = self.translatePositionToName(+2)
+			self.translatePositionToName(+2, self.translatePositionToName(+1))
+			self.translatePositionToName(+1, self.translatePositionToName( 0))
+			self.translatePositionToName( 0, self.translatePositionToName(-1))
+			self.translatePositionToName(-1, self.translatePositionToName(-2))
+			self.translatePositionToName(-2, rP2)
+
+			self["-1"].startMoving(doStepEveryXMs)
+			self["0"].startMoving(doStepEveryXMs)
+			self["+1"].startMoving(doStepEveryXMs)
+			self["+2"].startMoving(doStepEveryXMs)
+
+			# GroupTimer
+			self["-2"].startMoving(doStepEveryXMs)
+
+		return True
+
