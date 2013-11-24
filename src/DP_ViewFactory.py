@@ -37,7 +37,7 @@ def getDefaultCineElementsList():
 	printl("", __name__, "S")
 
 	elementsList = ["current", "total", "functionsContainer", "backdrop", "poster", "audio", "resolution",
-	                "aspect", "codec", "rated", "title", "tag", "shortDescription", "subtitles", "audio",
+	                "aspect", "codec", "rated", "title", "grandparentTitle" ,"tag", "shortDescription", "subtitles", "audio",
 	                "genre", "year", "runtime", "backdroptext", "postertext", "rating_stars", "sound"]
 
 	printl("", __name__, "C")
@@ -108,7 +108,7 @@ def getViewsFromSkinParams(myType):
 
 	for view in tree.findall(myType):
 		# lets copy params to new alterable variable
-		currentParams =  copy.deepcopy(defaultParams)
+		currentParams = copy.deepcopy(defaultParams)
 		printl("currentParams: " + str(currentParams), __name__, "D")
 
 		useMe, subViewDict = getSubViewParams(view)
@@ -133,10 +133,10 @@ def getViewsFromSkinParams(myType):
 			else:
 				currentParams["settings"][setting] = translateValues(value)
 
-		# override params
-		for element in view.iter("element"):
+		# override params in the main first = main screen
+		for element in view.iter("main"):
 			name = element.get("name")
-			printl("name: " + str(name), __name__, "D")
+			printl("name2: " + str(name), __name__, "D")
 
 			params = element.attrib
 			printl("params: " + str(params), __name__, "D")
@@ -209,6 +209,7 @@ def getMovieViewDefaults():
 		params["elements"][element]["visible"] = True
 
 	# override default True
+	params["elements"]["grandparentTitle"]["visible"]              = False
 
 	# add addional params in elements
 	params["elements"]["backdrop"]["height"]                       = "315"
@@ -247,6 +248,7 @@ def getShowViewDefaults():
 	params["elements"]["audio"]["visible"]                         = False
 	params["elements"]["year"]["visible"]                          = False
 	params["elements"]["runtime"]["visible"]                       = False
+	params["elements"]["grandparentTitle"]["visible"]              = False
 
 	# add addional params in elements
 	params["elements"]["backdrop"]["height"]                       = "315"
