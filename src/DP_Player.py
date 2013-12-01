@@ -179,7 +179,8 @@ class DP_Player(MoviePlayer):
 		"stop": self.leavePlayer,
 		"leavePlayer": self.hide,
 		"next": self.seekManual,
-		"previous": self.seekManual
+		"previous": self.seekManual,
+		"showRunningRecords": self.leavePlayer
 		}, -2)
 		
 		# it will stop up/down/movielist buttons opening standard movielist whilst playing movie in plex
@@ -516,7 +517,6 @@ class DP_Player(MoviePlayer):
 		currentTime = self.getPlayPosition()[1] / 90000
 		totalTime = self.getPlayLength()[1] / 90000
 		progress = currentTime / (totalTime/100)
-		#progress = 0
 		printl( "played time is %s secs of %s @ %s%%" % ( currentTime, totalTime, progress),self, "I" )
 		
 		instance = Singleton()
