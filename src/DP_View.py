@@ -1066,64 +1066,68 @@ class DP_View(Screen, NumericalTextInput):
 	#
 	#===========================================================================
 	def onEnter(self):
-		printl("", self, "S")
-		selection = self["listview"].getCurrent()
+		try:
+			printl("", self, "S")
+			selection = self["listview"].getCurrent()
 
-		if selection is not None:
-			details		= selection[1]
-			extraData	= selection[2]
-			#image		= selection[3]
+			if selection is not None:
+				details		= selection[1]
+				extraData	= selection[2]
+				#image		= selection[3]
 
-			#details
-			viewMode	= details['viewMode']
-			self.viewMode = self.details ["viewMode"]
+				#details
+				viewMode	= details['viewMode']
+				self.viewMode = self.details ["viewMode"]
 
-			server		= details['server']
-			printl("currentViewMode: " +str(viewMode), self, "D")
-			printl("server: " +str(server), self, "D")
+				server		= details['server']
+				printl("currentViewMode: " +str(viewMode), self, "D")
+				printl("server: " +str(server), self, "D")
 
-			#extraData
-			url_path	= extraData['key']
-			printl("url_path: " +str(url_path), self, "D")
+				#extraData
+				url_path	= extraData['key']
+				printl("url_path: " +str(url_path), self, "D")
 
-			if viewMode == "ShowSeasons":
-				self.viewStep += 1
-				printl("viewMode -> ShowSeasons", self, "I")
+				if viewMode == "ShowSeasons":
+					self.viewStep += 1
+					printl("viewMode -> ShowSeasons", self, "I")
 
-				params = {"viewMode": viewMode, "url": "http://" + server + url_path}
+					params = {"viewMode": viewMode, "url": "http://" + server + url_path}
 
-				self.currentSeasonsParams = params
-				self.currentShowIndex = self["listview"].getIndex()
+					self.currentSeasonsParams = params
+					self.currentShowIndex = self["listview"].getIndex()
 
-				self._load(params)
+					self._load(params)
 
-			elif viewMode == "ShowEpisodes":
-				self.viewStep += 1
-				printl("viewMode -> ShowEpisodes", self, "I")
+				elif viewMode == "ShowEpisodes":
+					self.viewStep += 1
+					printl("viewMode -> ShowEpisodes", self, "I")
 
-				params = {"viewMode": viewMode, "url": "http://" + server + url_path}
+					params = {"viewMode": viewMode, "url": "http://" + server + url_path}
 
-				self.currentEpisodesParams = params
-				self.currentSeasonIndex = self["listview"].getIndex()
+					self.currentEpisodesParams = params
+					self.currentSeasonIndex = self["listview"].getIndex()
 
-				self._load(params)
+					self._load(params)
 
-			elif viewMode == "play":
-				printl("viewMode -> play", self, "I")
-				self.playEntry(selection)
+				elif viewMode == "play":
+					printl("viewMode -> play", self, "I")
+					self.playEntry(selection)
 
-			elif viewMode == "directory":
-				printl("viewMode -> directory", self, "I")
+				elif viewMode == "directory":
+					printl("viewMode -> directory", self, "I")
 
-				params = {"viewMode": viewMode, "id": url_path}
+					params = {"viewMode": viewMode, "id": url_path}
 
-				self.currentMovieParams = params
-				self.currentMovieIndex = self["listview"].getIndex()
+					self.currentMovieParams = params
+					self.currentMovieIndex = self["listview"].getIndex()
 
-				self._load(params)
+					self._load(params)
 
-			else:
-				printl("SOMETHING WENT WRONG", self, "W")
+				else:
+					printl("SOMETHING WENT WRONG", self, "W")
+		except:
+			printl("SOMETHING WENT WRONG, please look for 'DPS_ViewShows::refresh' after a 'onEnter'", self, "W")
+			self.session.open(MessageBox,_("Sorry unable to perform action, something has failed!!"), MessageBox.TYPE_ERROR)
 
 		self.refresh()
 
